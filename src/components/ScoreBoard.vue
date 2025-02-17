@@ -46,6 +46,7 @@
                   @click="toggleDouble(team.id, index)"
                   icon="style"
                   class="q-ml-xs"
+                  glossy
                 />
               </div>
             </div>
@@ -115,11 +116,17 @@ const sortButtonClick = () => {
 .scoreboard-container {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 8px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
 }
 
 .team-row {
   transition: all 1s;
   background-color: rgb(197, 217, 249);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .flip-list-move {
