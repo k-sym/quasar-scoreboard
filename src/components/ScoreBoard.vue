@@ -4,7 +4,7 @@
       <q-btn
         color="primary"
         @click="sortButtonClick"
-        label="S"
+        label="^"
         icon="sort"
       />
     </div>
@@ -25,11 +25,11 @@
               <div
                 v-for="(score, index) in team.scores"
                 :key="index"
-                class="col"
+                class="col row items-center"
               >
                 <q-input
                   type="number"
-                  :model-value="score"
+                  :model-value="getDisplayScore(team.id, index)"
                   @update:model-value="val => updateScore(team.id, index, val)"
                   dense
                   borderless
@@ -38,11 +38,19 @@
                   input-class="text-right"
                   standout
                   bg-color="white"
+                  class="col"
+                />
+                <q-btn
+                  padding="6px 2px"
+                  :color="isDoubleActive(team.id, index) ? 'green-6' : 'grey'"
+                  @click="toggleDouble(team.id, index)"
+                  icon="style"
+                  class="q-ml-xs"
                 />
               </div>
             </div>
             <div class="col-2 text-h6 text-right">
-              {{ scoreStore.totalScore(team.id) }}
+              {{ getTotalScore(team) }}
             </div>
           </div>
         </div>
@@ -59,16 +67,42 @@ const scoreStore = useScoreStore()
 const sorted = ref(false)
 const sortedTeams = ref([...scoreStore.teams])
 
+// Track which scores are doubled
+const doubledScores = ref({})
+
+const getTotalScore = (team) => {
+  return team.scores.reduce((total, score, index) => {
+    const multiplier = isDoubleActive(team.id, index) ? 2 : 1
+    return total + (score * multiplier)
+  }, 0)
+}
+
+const isDoubleActive = (teamId, round) => {
+  return doubledScores.value[`${teamId}-${round}`] || false
+}
+
+const getDisplayScore = (teamId, round) => {
+  const team = scoreStore.teams.find(t => t.id === teamId)
+  const baseScore = team?.scores[round] || 0
+  return isDoubleActive(teamId, round) ? baseScore * 2 : baseScore
+}
+
+const toggleDouble = (teamId, round) => {
+  const key = `${teamId}-${round}`
+  doubledScores.value[key] = !doubledScores.value[key]
+}
+
 const sortTeams = () => {
   sortedTeams.value = [...scoreStore.teams].sort((a, b) => {
-    const totalA = scoreStore.totalScore(a.id)
-    const totalB = scoreStore.totalScore(b.id)
+    const totalA = getTotalScore(a)
+    const totalB = getTotalScore(b)
     return totalB - totalA
   })
 }
 
 const updateScore = (teamId, round, value) => {
-  scoreStore.updateScore(teamId, round, value)
+  const actualValue = isDoubleActive(teamId, round) ? value / 2 : value
+  scoreStore.updateScore(teamId, round, actualValue)
 }
 
 const sortButtonClick = () => {
