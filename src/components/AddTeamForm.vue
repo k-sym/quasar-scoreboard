@@ -5,6 +5,7 @@
         v-model="teamName"
         label="Team Name"
         outlined
+        bg-color="white"
         :rules="[val => !!val || 'Team name is required']"
       />
       <q-btn type="submit" color="primary" label="Add Team" />

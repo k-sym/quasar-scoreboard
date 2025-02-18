@@ -42,7 +42,7 @@
                 />
                 <q-btn
                   padding="6px 2px"
-                  :color="isDoubleActive(team.id, index) ? 'green-6' : 'grey'"
+                  :color="isDoubleActive(team.id, index) ? 'green-6' : 'grey-2'"
                   @click="toggleDouble(team.id, index)"
                   icon="style"
                   class="q-ml-xs"
@@ -51,7 +51,9 @@
               </div>
             </div>
             <div class="col-2 text-h6 text-right">
-              {{ getTotalScore(team) }}
+              <transition name="fade">
+                <span v-if="sorted">{{ getTotalScore(team) }}</span>
+              </transition>
             </div>
           </div>
         </div>
@@ -62,7 +64,7 @@
 
 <script setup>
 import { useScoreStore } from 'stores/scoreStore'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 const scoreStore = useScoreStore()
 const sorted = ref(false)
@@ -70,6 +72,15 @@ const sortedTeams = ref([...scoreStore.teams])
 
 // Track which scores are doubled
 const doubledScores = ref({})
+
+// Watch for score changes and hide totals
+watch(
+  () => scoreStore.teams.map(team => team.scores),
+  () => {
+    sorted.value = false
+  },
+  { deep: true }
+)
 
 const getTotalScore = (team) => {
   return team.scores.reduce((total, score, index) => {
@@ -139,5 +150,15 @@ const sortButtonClick = () => {
 
 .bg-silver {
   background-color: silver !important;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
