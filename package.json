@@ -14,25 +14,50 @@
     "postinstall": "quasar prepare"
   },
   "dependencies": {
-    "pinia": "^2.0.11",
-    "@quasar/extras": "^1.16.4",
-    "quasar": "^2.16.0",
-    "vue": "^3.4.18",
-    "vue-router": "^4.0.0"
+    "@quasar/extras": "^1.17.0",
+    "pinia": "^3.0.3",
+    "quasar": "2.17.7",
+    "vue": "^3.5.22",
+    "vue-router": "^4.5.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.14.0",
-    "eslint": "^9.14.0",
-    "eslint-plugin-vue": "^9.30.0",
-    "globals": "^15.12.0",
-    "vite-plugin-checker": "^0.8.0",
-    "@quasar/app-vite": "^2.0.0",
-    "autoprefixer": "^10.4.2",
-    "postcss": "^8.4.14"
+    "@eslint/js": "^9.37.0",
+    "@quasar/app-vite": "2.3.0",
+    "autoprefixer": "^10.4.21",
+    "eslint": "^9.37.0",
+    "eslint-plugin-vue": "^10.5.0",
+    "globals": "^16.4.0",
+    "postcss": "^8.5.6",
+    "sass": "1.77.6",
+    "vite-plugin-checker": "^0.11.0",
+    "vue-eslint-parser": "^10.2.0"
   },
   "engines": {
     "node": "^28 || ^26 || ^24 || ^22 || ^20 || ^18",
     "npm": ">= 6.13.4",
     "yarn": ">= 1.21.1"
+  },
+  "resolutions": {
+    "sass-embedded": "npm:sass@1.77.6",
+    "sass-embedded-android-arm": "npm:sass@1.77.6",
+    "sass-embedded-android-arm64": "npm:sass@1.77.6",
+    "sass-embedded-android-ia32": "npm:sass@1.77.6",
+    "sass-embedded-android-riscv64": "npm:sass@1.77.6",
+    "sass-embedded-android-x64": "npm:sass@1.77.6",
+    "sass-embedded-darwin-arm64": "npm:sass@1.77.6",
+    "sass-embedded-darwin-x64": "npm:sass@1.77.6",
+    "sass-embedded-linux-arm": "npm:sass@1.77.6",
+    "sass-embedded-linux-arm64": "npm:sass@1.77.6",
+    "sass-embedded-linux-ia32": "npm:sass@1.77.6",
+    "sass-embedded-linux-musl-arm": "npm:sass@1.77.6",
+    "sass-embedded-linux-musl-arm64": "npm:sass@1.77.6",
+    "sass-embedded-linux-musl-ia32": "npm:sass@1.77.6",
+    "sass-embedded-linux-musl-riscv64": "npm:sass@1.77.6",
+    "sass-embedded-linux-musl-x64": "npm:sass@1.77.6",
+    "sass-embedded-linux-riscv64": "npm:sass@1.77.6",
+    "sass-embedded-linux-x64": "npm:sass@1.77.6",
+    "sass-embedded-win32-arm64": "npm:sass@1.77.6",
+    "sass-embedded-win32-ia32": "npm:sass@1.77.6",
+    "sass-embedded-win32-x64": "npm:sass@1.77.6"
   }
 }
