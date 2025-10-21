@@ -42,7 +42,7 @@
               <div
                 v-for="(score, index) in team.scores"
                 :key="index"
-                class="col row items-center round-column"
+                class="col row items-center"
               >
                 <q-input
                   type="number"
@@ -52,7 +52,7 @@
                   borderless
                   min="0"
                   step="1"
-                  input-class="text-center"
+                  input-class="text-right"
                   standout
                   bg-color="white"
                   class="col"
