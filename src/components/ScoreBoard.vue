@@ -9,6 +9,23 @@
       />
     </div>
     <div class="scoreboard-container">
+      <!-- Sticky Header Row -->
+      <div class="header-row q-pa-md bg-primary text-white rounded-borders q-mb-sm">
+        <div class="row items-center">
+          <div class="col-3 text-h6">Team</div>
+          <div class="col-7 row">
+            <div
+              v-for="(_, index) in scoreStore.teams[0]?.scores || []"
+              :key="index"
+              class="col text-center round-header"
+            >
+              Round {{ index + 1 }}
+            </div>
+          </div>
+          <div class="col-2 text-h6 text-right">Total</div>
+        </div>
+      </div>
+
       <transition-group :name="sorted ? 'flip-list' : null" tag="div">
         <div
           v-for="(team, index) in sortedTeams"
@@ -130,6 +147,33 @@ const sortButtonClick = () => {
   padding: 8px;
   background-color: #f5f5f5;
   border-radius: 4px;
+}
+
+.header-row {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.round-header {
+  font-weight: 600;
+  border-left: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 4px 0;
+}
+
+.round-header:first-child {
+  border-left: none;
+}
+
+.round-column {
+  border-left: 2px solid rgba(0, 0, 0, 0.1);
+  padding-left: 8px;
+}
+
+.round-column:first-child {
+  border-left: none;
+  padding-left: 0;
 }
 
 .team-row {

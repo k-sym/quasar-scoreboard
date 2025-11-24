@@ -24,14 +24,15 @@
 
     <div class="q-mt-md">
       <q-list bordered class="rounded-borders">
-        <q-item-label header>Current Teams</q-item-label>
+        <q-item-label header class="team-list-header">Current Teams</q-item-label>
         <q-item
-          v-for="team in scoreStore.teams"
+          v-for="(team, index) in scoreStore.teams"
           :key="team.id"
           class="q-my-sm"
+          :class="index % 2 === 0 ? 'team-row-even' : 'team-row-odd'"
         >
           <q-item-section>
-            <q-item-label>{{ team.name }}</q-item-label>
+            <q-item-label class="text-white">{{ team.name }}</q-item-label>
           </q-item-section>
           <q-item-section side>
             <q-btn
@@ -97,3 +98,18 @@ const removeTeam = (teamId) => {
   })
 }
 </script>
+
+<style scoped>
+.team-list-header {
+  background-color: #e0e0e0;
+  color: black;
+}
+
+.team-row-even {
+  background-color: rgba(25, 118, 210, 0.7);
+}
+
+.team-row-odd {
+  background-color: rgba(25, 118, 210, 0.5);
+}
+</style>
