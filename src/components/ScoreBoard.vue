@@ -1,28 +1,31 @@
 <template>
   <q-page padding>
-    <div class="q-mb-md">
+    <div class="qn-toolbar q-mb-md">
       <q-btn
-        color="primary"
+        no-caps
+        class="qn-rank-btn"
         @click="sortButtonClick"
-        label="^"
         icon="sort"
+        label="Rank!"
       />
+      <span class="qn-hint">Enter the scores, flag the jokers, then hit Rank!</span>
     </div>
+
     <div class="scoreboard-container">
       <!-- Sticky Header Row -->
-      <div class="header-row q-pa-md bg-primary text-white rounded-borders q-mb-sm">
-        <div class="row items-center">
-          <div class="col-3 text-h6">Team</div>
-          <div class="col-7 row">
+      <div class="header-row qn-pill q-pa-md q-mb-sm">
+        <div class="row items-center no-wrap">
+          <div class="col-3 qn-col-label qn-uppercase">Team</div>
+          <div class="col-7 row items-center justify-around no-wrap">
             <div
               v-for="(_, index) in scoreStore.teams[0]?.scores || []"
               :key="index"
-              class="col text-center round-header"
+              class="col flex flex-center"
             >
-              Round {{ index + 1 }}
+              <span class="qn-badge qn-round-badge">{{ index + 1 }}</span>
             </div>
           </div>
-          <div class="col-2 text-h6 text-right">Total</div>
+          <div class="col-2 qn-col-label qn-uppercase text-right">Total</div>
         </div>
       </div>
 
@@ -30,55 +33,69 @@
         <div
           v-for="(team, index) in sortedTeams"
           :key="team.id"
-          class="team-row q-pa-md q-mb-sm bg-white shadow-2 rounded-borders"
+          class="team-row qn-pill q-pa-md q-mb-sm"
           :class="{
-            'bg-gold': index === 0 && sorted,
-            'bg-silver': index === 1 && sorted
+            'team-row--gold': index === 0 && sorted,
+            'team-row--silver': index === 1 && sorted
           }"
         >
-          <div class="row items-center">
-            <div class="col-3 text-h6">{{ team.name }}</div>
-            <div class="col-7 row">
+          <div class="row items-center no-wrap">
+            <div class="col-3 row items-center no-wrap">
+              <transition name="fade">
+                <span
+                  v-if="sorted"
+                  class="qn-badge qn-rank-badge q-mr-sm"
+                  :class="{
+                    'qn-rank-badge--gold': index === 0,
+                    'qn-rank-badge--silver': index === 1
+                  }"
+                >{{ index + 1 }}</span>
+              </transition>
+              <span class="qn-team-name qn-uppercase">{{ team.name }}</span>
+            </div>
+            <div class="col-7 row items-center justify-around no-wrap">
               <div
-                v-for="(score, index) in team.scores"
-                :key="index"
-                class="col row items-center"
+                v-for="(score, sIndex) in team.scores"
+                :key="sIndex"
+                class="col qn-cell"
               >
                 <q-input
                   type="number"
-                  :model-value="getCellValue(team.id, index)"
-                  @update:model-value="val => updateScore(team.id, index, val)"
-                  :readonly="isDoubleActive(team.id, index)"
+                  :model-value="getCellValue(team.id, sIndex)"
+                  @update:model-value="val => updateScore(team.id, sIndex, val)"
+                  :readonly="isDoubleActive(team.id, sIndex)"
+                  :class="['qn-cell-input', { 'qn-cell-input--doubled': isDoubleActive(team.id, sIndex) }]"
+                  :input-class="isDoubleActive(team.id, sIndex)
+                    ? 'text-center text-weight-bolder text-green-8'
+                    : 'text-center'"
                   dense
                   borderless
                   min="0"
                   step="1"
-                  :input-class="isDoubleActive(team.id, index)
-                    ? 'text-right text-weight-bold text-green-8'
-                    : 'text-right'"
-                  standout
-                  bg-color="white"
-                  class="col"
                 />
                 <q-btn
-                  padding="6px 2px"
-                  :color="isDoubleActive(team.id, index) ? 'green-6' : 'grey-2'"
-                  @click="toggleDouble(team.id, index)"
+                  round
+                  dense
+                  size="xs"
+                  :color="isDoubleActive(team.id, sIndex) ? 'positive' : 'grey-3'"
+                  :text-color="isDoubleActive(team.id, sIndex) ? 'white' : 'grey-7'"
+                  @click="toggleDouble(team.id, sIndex)"
                   icon="style"
-                  class="q-ml-xs"
-                  glossy
+                  class="qn-joker"
                 />
               </div>
             </div>
-            <div class="col-2 text-h6 text-right">
+            <div class="col-2 text-right">
               <transition name="fade">
-                <span v-if="sorted">{{ getTotalScore(team) }}</span>
+                <span v-if="sorted" class="qn-total">{{ getTotalScore(team) }}</span>
               </transition>
             </div>
           </div>
         </div>
       </transition-group>
     </div>
+
+    <canvas ref="confettiCanvas" class="qn-confetti"></canvas>
   </q-page>
 </template>
 
@@ -88,6 +105,7 @@ import { ref, computed, watch } from 'vue'
 
 const scoreStore = useScoreStore()
 const sorted = ref(false)
+const confettiCanvas = ref(null)
 
 // Explicit display order (by team id) so rows stay put while the host is
 // entering scores, and only reshuffle when the sort button is pressed.
@@ -130,63 +148,198 @@ const sortButtonClick = () => {
   displayOrder.value = [...scoreStore.teams]
     .sort((a, b) => getTotalScore(b) - getTotalScore(a))
     .map(team => team.id)
+  launchConfetti()
+}
+
+// Lightweight, dependency-free confetti burst when the standings are revealed.
+const launchConfetti = () => {
+  const canvas = confettiCanvas.value
+  if (!canvas || scoreStore.teams.length === 0) return
+  const ctx = canvas.getContext('2d')
+  canvas.width = window.innerWidth
+  canvas.height = window.innerHeight
+  const colors = ['#f13468', '#ffd24a', '#f37b98', '#ffffff', '#2e2e86']
+  const pieces = Array.from({ length: 140 }, () => ({
+    x: Math.random() * canvas.width,
+    y: -20 - Math.random() * canvas.height * 0.4,
+    size: 5 + Math.random() * 7,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    vx: -2 + Math.random() * 4,
+    vy: 3 + Math.random() * 4,
+    rot: Math.random() * Math.PI,
+    vr: -0.2 + Math.random() * 0.4
+  }))
+  let frame = 0
+  const tick = () => {
+    frame++
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    pieces.forEach(p => {
+      p.x += p.vx
+      p.y += p.vy
+      p.vy += 0.08
+      p.rot += p.vr
+      ctx.save()
+      ctx.translate(p.x, p.y)
+      ctx.rotate(p.rot)
+      ctx.fillStyle = p.color
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6)
+      ctx.restore()
+    })
+    if (frame < 170) {
+      requestAnimationFrame(tick)
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+    }
+  }
+  requestAnimationFrame(tick)
 }
 </script>
 
 <style scoped>
+.qn-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.qn-rank-btn {
+  background-color: var(--qn-pink);
+  color: #fff;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: 3px solid #fff;
+  border-radius: 14px;
+  padding: 8px 22px;
+}
+
+.qn-hint {
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
 .scoreboard-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 8px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
 }
 
 .header-row {
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  background-color: var(--qn-pink);
 }
 
-.round-header {
-  font-weight: 600;
-  border-left: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 4px 0;
+.qn-col-label {
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.95rem;
 }
 
-.round-header:first-child {
-  border-left: none;
-}
-
-.round-column {
-  border-left: 2px solid rgba(0, 0, 0, 0.1);
-  padding-left: 8px;
-}
-
-.round-column:first-child {
-  border-left: none;
-  padding-left: 0;
+.qn-round-badge {
+  width: 30px;
+  height: 30px;
+  font-size: 0.8rem;
 }
 
 .team-row {
-  transition: all 1s;
-  background-color: rgb(197, 217, 249);
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  margin-bottom: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
 }
 
+.team-row--gold {
+  background-color: var(--qn-gold);
+}
+
+.team-row--silver {
+  background-color: var(--qn-silver);
+}
+
+.qn-team-name {
+  color: var(--qn-navy-deep);
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.qn-rank-badge {
+  width: 34px;
+  height: 34px;
+  font-size: 0.95rem;
+  flex: none;
+}
+
+.qn-rank-badge--gold {
+  background-color: var(--qn-gold-deep);
+}
+
+.qn-rank-badge--silver {
+  background-color: var(--qn-silver-deep);
+}
+
+.qn-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.qn-cell-input {
+  max-width: 48px;
+}
+
+.qn-cell-input :deep(.q-field__control) {
+  background: #f2f3fb;
+  border: 2px solid #d9dcef;
+  border-radius: 9px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 2px;
+}
+
+.qn-cell-input :deep(.q-field__native) {
+  padding: 0;
+  min-height: 0;
+}
+
+.qn-cell-input :deep(.q-field__control)::before,
+.qn-cell-input :deep(.q-field__control)::after {
+  display: none;
+}
+
+.qn-cell-input :deep(input) {
+  color: var(--qn-navy-deep);
+  font-weight: 800;
+}
+
+.qn-cell-input--doubled :deep(.q-field__control) {
+  background: #e6f6ec;
+  border-color: var(--qn-bonus);
+}
+
+.qn-joker {
+  flex: none;
+}
+
+.qn-total {
+  font-weight: 900;
+  font-size: 1.7rem;
+  color: var(--qn-navy-deep);
+  letter-spacing: -0.5px;
+}
+
+.qn-confetti {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Bouncy reorder when the standings are revealed. */
 .flip-list-move {
-  transition: transform 2s;
-}
-
-.bg-gold {
-  background-color: gold !important;
-}
-
-.bg-silver {
-  background-color: silver !important;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .fade-enter-active,

@@ -1,1 +1,79 @@
-// app global css in SCSS form
+// Quiz Night theme — matches the host's quiz slide deck.
+// See docs/superpowers/specs/2026-06-19-quiznight-restyle-design.md
+
+:root {
+  --qn-navy: #2e2e86;
+  --qn-navy-deep: #24246b;
+  --qn-pink: #f13468;
+  --qn-coral: #f37b98;
+  --qn-gold: #ffd24a;
+  --qn-gold-deep: #b8860b;
+  --qn-silver: #e3e7ef;
+  --qn-silver-deep: #8a93a6;
+  --qn-bonus: #1f9d57;
+}
+
+// The navy "stage" the whole app sits on, with soft coral blobs pinned to the
+// corners so the texture never crowds the data in the middle.
+.qn-stage {
+  position: relative;
+  background-color: var(--qn-navy);
+  overflow: hidden;
+}
+
+.qn-stage::before,
+.qn-stage::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.qn-stage::before {
+  width: 420px;
+  height: 420px;
+  background: var(--qn-coral);
+  opacity: 0.5;
+  left: -200px;
+  bottom: -160px;
+}
+
+.qn-stage::after {
+  width: 320px;
+  height: 320px;
+  background: var(--qn-navy-deep);
+  opacity: 0.7;
+  right: -150px;
+  top: -120px;
+}
+
+// Keep page content above the decorative blobs.
+.qn-stage > * {
+  position: relative;
+  z-index: 1;
+}
+
+// White-outlined rounded pill — the deck's signature panel.
+.qn-pill {
+  border: 3px solid #fff;
+  border-radius: 16px;
+}
+
+// Navy circle badge with a white ring (round numbers / rank markers).
+.qn-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--qn-navy-deep);
+  border: 2px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.qn-uppercase {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
