@@ -159,15 +159,15 @@ const launchConfetti = () => {
   canvas.width = window.innerWidth
   canvas.height = window.innerHeight
   const colors = ['#f13468', '#ffd24a', '#f37b98', '#ffffff', '#2e2e86']
-  const pieces = Array.from({ length: 140 }, () => ({
+  const pieces = Array.from({ length: 320 }, () => ({
     x: Math.random() * canvas.width,
-    y: -20 - Math.random() * canvas.height * 0.4,
+    y: -20 - Math.random() * canvas.height * 0.5,
     size: 5 + Math.random() * 7,
     color: colors[Math.floor(Math.random() * colors.length)],
-    vx: -2 + Math.random() * 4,
-    vy: 3 + Math.random() * 4,
+    vx: -1.5 + Math.random() * 3,
+    vy: 1.5 + Math.random() * 2.5,
     rot: Math.random() * Math.PI,
-    vr: -0.2 + Math.random() * 0.4
+    vr: -0.15 + Math.random() * 0.3
   }))
   let frame = 0
   const tick = () => {
@@ -176,7 +176,7 @@ const launchConfetti = () => {
     pieces.forEach(p => {
       p.x += p.vx
       p.y += p.vy
-      p.vy += 0.08
+      p.vy += 0.035
       p.rot += p.vr
       ctx.save()
       ctx.translate(p.x, p.y)
@@ -185,7 +185,7 @@ const launchConfetti = () => {
       ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6)
       ctx.restore()
     })
-    if (frame < 170) {
+    if (frame < 420) {
       requestAnimationFrame(tick)
     } else {
       ctx.clearRect(0, 0, canvas.width, canvas.height)
