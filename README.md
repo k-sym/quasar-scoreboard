@@ -1,32 +1,56 @@
 # Simple Scoreboard App
 
-This is a simple scoreboard app that I put together to make it more visually appealing at a monthly quiz night I host at the local pub. I want to keep score and show it to the participants on the same screen that I served the quiz from. It was quite good because at the end of each round, I input the figures together, whether a joker was played during that round for that particular team, and hit a button, which then reorganizes the rows. It's very gimmicky, but the crowd seems to like it, so I'm keeping it and thought I would share!
+A simple, visually-appealing scoreboard I put together for a monthly quiz night I host at the
+local pub. It keeps score on the same screen I run the quiz from, so the participants can watch the
+standings update live.
+
+At the end of each round I enter every team's score, flag any team that played their **joker** that
+round (which doubles their score for it), and hit the sort button — the rows then animate into rank
+order, with gold and silver highlights for first and second. It's gimmicky, but the crowd seems to
+like it, so I'm keeping it and thought I'd share!
+
+## How it works
+
+- **Teams** view — add and remove teams. Teams and scores are saved to the browser's
+  `localStorage`, so they survive a page reload.
+- **Board** view — a row per team with an input per round. Tap the joker (card) button on a round to
+  double that round's score; the cell shows the doubled figure in bold green and the total counts it
+  twice. Tap it again to undo. Press the sort button to reveal totals and rank the teams.
+
+Built with [Quasar](https://quasar.dev) (Vue 3 + Pinia + Vite).
 
 ## Install the dependencies
+
 ```bash
-yarn
-# or
 npm install
 ```
 
-### Start the app in development mode (hot-code reloading, error reporting, etc.)
+## Start the app in development mode (hot-code reloading, error reporting, etc.)
+
 ```bash
 quasar dev
 ```
 
+## Run the tests
 
-### Lint the files
 ```bash
-yarn lint
-# or
+npm test
+```
+
+The store's scoring logic (totals, jokers, persistence) is covered by [Vitest](https://vitest.dev).
+
+## Lint the files
+
+```bash
 npm run lint
 ```
 
+## Build the app for production
 
-### Build the app for production
 ```bash
 quasar build
 ```
 
-### Customize the configuration
+## Customize the configuration
+
 See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
