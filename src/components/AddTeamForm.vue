@@ -88,8 +88,7 @@ const resetTeams = () => {
 }
 
 const removeTeam = (teamId) => {
-  scoreStore.teams = scoreStore.teams.filter(team => team.id !== teamId)
-  scoreStore.saveToLocalStorage()
+  scoreStore.removeTeam(teamId)
   Notify.create({
     type: 'positive',
     message: 'Team removed successfully!',

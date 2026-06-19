@@ -46,13 +46,16 @@
               >
                 <q-input
                   type="number"
-                  :model-value="getDisplayScore(team.id, index)"
+                  :model-value="getCellValue(team.id, index)"
                   @update:model-value="val => updateScore(team.id, index, val)"
+                  :readonly="isDoubleActive(team.id, index)"
                   dense
                   borderless
                   min="0"
                   step="1"
-                  input-class="text-right"
+                  :input-class="isDoubleActive(team.id, index)
+                    ? 'text-right text-weight-bold text-green-8'
+                    : 'text-right'"
                   standout
                   bg-color="white"
                   class="col"
@@ -81,16 +84,25 @@
 
 <script setup>
 import { useScoreStore } from 'stores/scoreStore'
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 const scoreStore = useScoreStore()
 const sorted = ref(false)
-const sortedTeams = ref([...scoreStore.teams])
 
-// Track which scores are doubled
-const doubledScores = ref({})
+// Explicit display order (by team id) so rows stay put while the host is
+// entering scores, and only reshuffle when the sort button is pressed.
+// Teams added after mount are appended automatically; removed teams drop out.
+const displayOrder = ref(scoreStore.teams.map(team => team.id))
 
-// Watch for score changes and hide totals
+const sortedTeams = computed(() => {
+  const byId = new Map(scoreStore.teams.map(team => [team.id, team]))
+  const ordered = displayOrder.value.map(id => byId.get(id)).filter(Boolean)
+  const seen = new Set(displayOrder.value)
+  const extras = scoreStore.teams.filter(team => !seen.has(team.id))
+  return [...ordered, ...extras]
+})
+
+// Editing a score hides the totals again until the next sort.
 watch(
   () => scoreStore.teams.map(team => team.scores),
   () => {
@@ -99,44 +111,25 @@ watch(
   { deep: true }
 )
 
-const getTotalScore = (team) => {
-  return team.scores.reduce((total, score, index) => {
-    const multiplier = isDoubleActive(team.id, index) ? 2 : 1
-    return total + (score * multiplier)
-  }, 0)
-}
+const getTotalScore = (team) => scoreStore.totalScore(team.id)
+const isDoubleActive = (teamId, round) => scoreStore.isDoubled(teamId, round)
 
-const isDoubleActive = (teamId, round) => {
-  return doubledScores.value[`${teamId}-${round}`] || false
-}
-
-const getDisplayScore = (teamId, round) => {
+// Display only: show the doubled figure in the cell when the joker is active.
+// The store always keeps the raw score, so toggling the joker off restores it
+// exactly (no fractional-score corruption).
+const getCellValue = (teamId, round) => {
   const team = scoreStore.teams.find(t => t.id === teamId)
-  const baseScore = team?.scores[round] || 0
-  return isDoubleActive(teamId, round) ? baseScore * 2 : baseScore
+  const base = team?.scores[round] || 0
+  return isDoubleActive(teamId, round) ? base * 2 : base
 }
-
-const toggleDouble = (teamId, round) => {
-  const key = `${teamId}-${round}`
-  doubledScores.value[key] = !doubledScores.value[key]
-}
-
-const sortTeams = () => {
-  sortedTeams.value = [...scoreStore.teams].sort((a, b) => {
-    const totalA = getTotalScore(a)
-    const totalB = getTotalScore(b)
-    return totalB - totalA
-  })
-}
-
-const updateScore = (teamId, round, value) => {
-  const actualValue = isDoubleActive(teamId, round) ? value / 2 : value
-  scoreStore.updateScore(teamId, round, actualValue)
-}
+const toggleDouble = (teamId, round) => scoreStore.toggleDouble(teamId, round)
+const updateScore = (teamId, round, value) => scoreStore.updateScore(teamId, round, value)
 
 const sortButtonClick = () => {
   sorted.value = true
-  sortTeams()
+  displayOrder.value = [...scoreStore.teams]
+    .sort((a, b) => getTotalScore(b) - getTotalScore(a))
+    .map(team => team.id)
 }
 </script>
 
