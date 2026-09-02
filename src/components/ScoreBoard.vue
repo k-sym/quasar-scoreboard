@@ -116,6 +116,10 @@ const scoreStore = useScoreStore()
 //                     the rank badges and the medal colours survive the edits
 //                     that follow (they show the *last* standings until the
 //                     next Rank!, which is also why the rows don't reorder).
+//                     This is deliberate, not a stale leftover: the bug
+//                     report's own goal is that the rank numbers "stay
+//                     visible" while the next round is entered, so hiding
+//                     them here would undo the fix.
 //   `totalsVisible` — the totals are live, i.e. they match what's in the cells.
 //                     Editing a score hides them again until the next Rank!,
 //                     but the total keeps its space in the row (see template).
@@ -138,6 +142,8 @@ const sortedTeams = computed(() => {
 
 // Editing a score hides the totals again until the next sort. The rank badges
 // deliberately stay put: removing them shifted the whole board mid-entry.
+// `updateScore` is the only action that writes to `scores`, and this
+// component is its only caller, so this watch sees every score edit.
 watch(
   () => scoreStore.teams.map(team => team.scores),
   () => {
