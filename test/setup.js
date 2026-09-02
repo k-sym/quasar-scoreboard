@@ -1,5 +1,7 @@
-// Minimal in-memory localStorage so the store can be tested under Node
-// without pulling in jsdom/happy-dom.
+// Node ships its own experimental `localStorage` global, disabled unless the
+// process is started with --localstorage-file, and it shadows the one happy-dom
+// puts on the window. Rather than pass a flag to every test runner, the store
+// keeps the in-memory stand-in it has always had.
 const store = new Map()
 
 globalThis.localStorage = {
@@ -8,3 +10,12 @@ globalThis.localStorage = {
   removeItem: (key) => store.delete(key),
   clear: () => store.clear()
 }
+
+// happy-dom has no 2D canvas context, and the confetti burst on Rank! would
+// call clearRect on null. Nothing asserts on the confetti; it just must not
+// throw. The burst then animates for 420 frames, which would keep the run's
+// timers busy for seconds after every ranking test, so frames are dropped too.
+const noop = new Proxy({}, { get: () => () => {} })
+globalThis.HTMLCanvasElement.prototype.getContext = () => noop
+globalThis.requestAnimationFrame = () => 0
+globalThis.cancelAnimationFrame = () => {}
