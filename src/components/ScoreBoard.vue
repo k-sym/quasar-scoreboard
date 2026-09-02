@@ -29,21 +29,21 @@
         </div>
       </div>
 
-      <transition-group :name="sorted ? 'flip-list' : null" tag="div">
+      <transition-group :name="ranked ? 'flip-list' : null" tag="div">
         <div
           v-for="(team, index) in sortedTeams"
           :key="team.id"
           class="team-row qn-pill q-pa-md q-mb-sm"
           :class="{
-            'team-row--gold': index === 0 && sorted,
-            'team-row--silver': index === 1 && sorted
+            'team-row--gold': index === 0 && ranked,
+            'team-row--silver': index === 1 && ranked
           }"
         >
           <div class="row items-center no-wrap">
             <div class="col-3 row items-center no-wrap">
               <transition name="fade">
                 <span
-                  v-if="sorted"
+                  v-if="ranked"
                   class="qn-badge qn-rank-badge q-mr-sm"
                   :class="{
                     'qn-rank-badge--gold': index === 0,
@@ -86,9 +86,14 @@
               </div>
             </div>
             <div class="col-2 text-right">
-              <transition name="fade">
-                <span v-if="sorted" class="qn-total">{{ getTotalScore(team) }}</span>
-              </transition>
+              <!-- Always rendered so the row keeps its height: the total is the
+                   tallest thing in the row, and unmounting it used to shrink
+                   every row (and the page) mid-edit. Fades instead. -->
+              <span
+                class="qn-total"
+                :class="{ 'qn-total--hidden': !totalsVisible }"
+                :aria-hidden="!totalsVisible"
+              >{{ getTotalScore(team) }}</span>
             </div>
           </div>
         </div>
@@ -104,7 +109,22 @@ import { useScoreStore } from 'stores/scoreStore'
 import { ref, computed, watch } from 'vue'
 
 const scoreStore = useScoreStore()
-const sorted = ref(false)
+
+// Two separate flags, so entering the next round's scores never changes the
+// height of the board under the host's cursor:
+//   `ranked`        — the board has been ranked at least once. Stays true, so
+//                     the rank badges and the medal colours survive the edits
+//                     that follow (they show the *last* standings until the
+//                     next Rank!, which is also why the rows don't reorder).
+//                     This is deliberate, not a stale leftover: the bug
+//                     report's own goal is that the rank numbers "stay
+//                     visible" while the next round is entered, so hiding
+//                     them here would undo the fix.
+//   `totalsVisible` — the totals are live, i.e. they match what's in the cells.
+//                     Editing a score hides them again until the next Rank!,
+//                     but the total keeps its space in the row (see template).
+const ranked = ref(false)
+const totalsVisible = ref(false)
 const confettiCanvas = ref(null)
 
 // Explicit display order (by team id) so rows stay put while the host is
@@ -120,13 +140,30 @@ const sortedTeams = computed(() => {
   return [...ordered, ...extras]
 })
 
-// Editing a score hides the totals again until the next sort.
+// Editing a score hides the totals again until the next sort. The rank badges
+// deliberately stay put: removing them shifted the whole board mid-entry.
+// `updateScore` is the only action that writes to `scores`, and this
+// component is its only caller, so this watch sees every score edit.
 watch(
   () => scoreStore.teams.map(team => team.scores),
   () => {
-    sorted.value = false
+    totalsVisible.value = false
   },
   { deep: true }
+)
+
+// A change to the TEAM LIST is a different board, so the standings on screen
+// have stopped being about the teams in front of you — drop `ranked` as well.
+// Without this, Reset followed by two new teams shows rank badges and a gold
+// row in a game nobody has ranked, and removing the leader silently promotes
+// second place to gold. Keyed on the ids rather than the array so a score edit
+// never reaches here: surviving a score edit is the whole point of `ranked`.
+watch(
+  () => scoreStore.teams.map(team => team.id).join(','),
+  () => {
+    ranked.value = false
+    totalsVisible.value = false
+  }
 )
 
 const getTotalScore = (team) => scoreStore.totalScore(team.id)
@@ -144,7 +181,8 @@ const toggleDouble = (teamId, round) => scoreStore.toggleDouble(teamId, round)
 const updateScore = (teamId, round, value) => scoreStore.updateScore(teamId, round, value)
 
 const sortButtonClick = () => {
-  sorted.value = true
+  ranked.value = true
+  totalsVisible.value = true
   displayOrder.value = [...scoreStore.teams]
     .sort((a, b) => getTotalScore(b) - getTotalScore(a))
     .map(team => team.id)
@@ -322,10 +360,17 @@ const launchConfetti = () => {
 }
 
 .qn-total {
+  display: inline-block;
   font-weight: 900;
   font-size: 1.7rem;
   color: var(--qn-navy-deep);
   letter-spacing: -0.5px;
+  transition: opacity 0.5s;
+}
+
+/* Hidden, not unmounted — the row must keep the same height either way. */
+.qn-total--hidden {
+  opacity: 0;
 }
 
 .qn-confetti {
