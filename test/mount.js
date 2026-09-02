@@ -5,23 +5,28 @@
 // browser we give it a renderer that builds plain JS nodes and assert on that
 // tree. Quasar components are stubbed: these tests are about ScoreBoard's own
 // markup, not about QInput's internals.
-import { createRenderer, defineComponent, h } from 'vue'
+import { createRenderer, defineComponent, h, nextTick } from 'vue'
 import { createPinia } from 'pinia'
 
 // Deliberately below the imports: `vue` and `pinia` must evaluate while these
 // are still undefined, so neither switches into browser mode. <transition> and
 // the confetti canvas do reach for them at runtime, hence the stubs.
-//   - requestAnimationFrame is a no-op: transitions and the confetti loop are
-//     started but never advance, which is all these tests need.
+//   - Frames are queued rather than run, and the test drives them with
+//     flushFrames(). A transition needs two frames before it finishes (and
+//     before <transition> actually unmounts a leaving element), while the
+//     confetti loop would otherwise run forever.
+//   - Zero transition durations mean whenTransitionEnds() resolves as soon as
+//     those frames have been flushed, instead of waiting for a transitionend.
 //   - Element exists but nothing is an instance of it, so <transition-group>
 //     skips its FLIP measuring (getBoundingClientRect and friends).
 const computedStyle = {
-  transitionDelay: '',
-  transitionDuration: '',
-  animationDelay: '',
-  animationDuration: ''
+  transitionDelay: '0s',
+  transitionDuration: '0s',
+  animationDelay: '0s',
+  animationDuration: '0s'
 }
-globalThis.requestAnimationFrame = () => 0
+const frameQueue = []
+globalThis.requestAnimationFrame = (cb) => frameQueue.push(cb)
 globalThis.cancelAnimationFrame = () => {}
 globalThis.getComputedStyle = () => computedStyle
 globalThis.Element = class Element {}
@@ -29,6 +34,14 @@ globalThis.window = {
   innerWidth: 1280,
   innerHeight: 800,
   getComputedStyle: () => computedStyle
+}
+
+// Run the queued frames (and any they queue in turn), then let Vue re-render.
+export async function flushFrames(count = 4) {
+  for (let i = 0; i < count; i++) {
+    frameQueue.splice(0, frameQueue.length).forEach((cb) => cb(i))
+    await nextTick()
+  }
 }
 
 let uid = 0
@@ -133,6 +146,7 @@ const stub = (name, tag) =>
   })
 
 export function mount(component, plugins = [createPinia()]) {
+  frameQueue.length = 0 // don't inherit a previous test's pending frames
   const root = createNode('element', 'div')
   const app = createApp(component)
   plugins.forEach((plugin) => app.use(plugin))

@@ -1,7 +1,7 @@
 import { beforeEach, afterEach, describe, it, expect } from 'vitest'
 import { nextTick } from 'vue'
 import { setActivePinia, createPinia } from 'pinia'
-import { mount, findByClass, findAllByClass, textOf } from './mount.js'
+import { mount, flushFrames, findByClass, findAllByClass, textOf } from './mount.js'
 import ScoreBoard from '../src/components/ScoreBoard.vue'
 import { useScoreStore } from '../src/stores/scoreStore.js'
 
@@ -41,6 +41,7 @@ const scoreRoundOne = () => {
 const clickRank = async (root) => {
   findByClass(root, 'qn-rank-btn').props.onClick()
   await nextTick()
+  await flushFrames()
 }
 
 const rankBadges = (root) => findAllByClass(root, 'qn-rank-badge')
@@ -54,6 +55,9 @@ const typeScore = async (root, rowIndex, round, value) => {
   const cell = findAllByClass(root, 'qn-cell-input')[rowIndex * rounds + round]
   cell.props['onUpdate:modelValue'](value)
   await nextTick()
+  // Give any transition the two frames it needs to finish, so an element that
+  // is on its way out has really gone by the time we count.
+  await flushFrames()
 }
 
 describe('ScoreBoard', () => {

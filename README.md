@@ -37,7 +37,9 @@ quasar dev
 npm test
 ```
 
-The store's scoring logic (totals, jokers, persistence) is covered by [Vitest](https://vitest.dev).
+The store's scoring logic (totals, jokers, persistence) is covered by [Vitest](https://vitest.dev),
+as is the board's ranking behaviour. There's no jsdom in the toolchain, so component tests mount
+into the tiny plain-object renderer in `test/mount.js` rather than a fake browser.
 
 ## Lint the files
 
