@@ -117,6 +117,58 @@ describe('ScoreBoard', () => {
     expect(totals(root).every((t) => t.className.includes('qn-total--hidden'))).toBe(true)
   })
 
+  // The team list changing means the standings are about a different board.
+  // `ranked` is sticky across score edits on purpose; it must NOT be sticky
+  // across these, or a fresh game inherits the last one's rosette.
+  it('drops the ranking when the teams are reset and a new game starts', async () => {
+    const root = render()
+    scoreRoundOne()
+    await nextTick()
+    await clickRank(root)
+    expect(rankBadges(root)).toHaveLength(3)
+
+    store.resetTeams()
+    store.addTeam('Dogs')
+    store.addTeam('Emus')
+    await nextTick()
+    await flushFrames()
+
+    // Nobody has pressed Rank! in this game.
+    expect(rankBadges(root)).toHaveLength(0)
+    expect(findAllByClass(root, 'team-row--gold')).toHaveLength(0)
+    expect(totals(root).every((t) => t.className.includes('qn-total--hidden'))).toBe(true)
+  })
+
+  it('drops the ranking when a team joins after the last Rank!', async () => {
+    const root = render()
+    scoreRoundOne()
+    await nextTick()
+    await clickRank(root)
+
+    store.addTeam('Dogs')
+    await nextTick()
+    await flushFrames()
+
+    // A late arrival must not be handed a place it never played for.
+    expect(rankBadges(root)).toHaveLength(0)
+    expect(teamNames(root)).toEqual(['Bees', 'Ants', 'Cats', 'Dogs'])
+  })
+
+  it('drops the ranking when the leader is removed', async () => {
+    const root = render()
+    scoreRoundOne()
+    await nextTick()
+    await clickRank(root)
+
+    store.removeTeam(teamId('Bees'))
+    await nextTick()
+    await flushFrames()
+
+    // Ants was second on 5; promoting it to gold is a standing nobody set.
+    expect(findAllByClass(root, 'team-row--gold')).toHaveLength(0)
+    expect(rankBadges(root)).toHaveLength(0)
+  })
+
   it('re-ranks on the next Rank! press', async () => {
     const root = render()
     scoreRoundOne()

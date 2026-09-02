@@ -152,6 +152,20 @@ watch(
   { deep: true }
 )
 
+// A change to the TEAM LIST is a different board, so the standings on screen
+// have stopped being about the teams in front of you — drop `ranked` as well.
+// Without this, Reset followed by two new teams shows rank badges and a gold
+// row in a game nobody has ranked, and removing the leader silently promotes
+// second place to gold. Keyed on the ids rather than the array so a score edit
+// never reaches here: surviving a score edit is the whole point of `ranked`.
+watch(
+  () => scoreStore.teams.map(team => team.id).join(','),
+  () => {
+    ranked.value = false
+    totalsVisible.value = false
+  }
+)
+
 const getTotalScore = (team) => scoreStore.totalScore(team.id)
 const isDoubleActive = (teamId, round) => scoreStore.isDoubled(teamId, round)
 
