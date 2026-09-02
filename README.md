@@ -38,8 +38,9 @@ npm test
 ```
 
 The store's scoring logic (totals, jokers, persistence) is covered by [Vitest](https://vitest.dev),
-as is the board's ranking behaviour. There's no jsdom in the toolchain, so component tests mount
-into the tiny plain-object renderer in `test/mount.js` rather than a fake browser.
+as is the board's ranking behaviour. Component tests mount `ScoreBoard.vue` with
+[Vue Test Utils](https://test-utils.vuejs.org) into a [happy-dom](https://github.com/capricorn86/happy-dom)
+DOM, stubbing the Quasar components the board uses so the assertions are about its own markup.
 
 ## Lint the files
 

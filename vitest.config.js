@@ -12,7 +12,7 @@ export default defineConfig({
     }
   },
   test: {
-    environment: './test/vite-client-env.js',
+    environment: 'happy-dom',
     setupFiles: ['./test/setup.js']
   }
 })
