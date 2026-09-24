@@ -32,11 +32,7 @@ yarn-error.log*
 # local .env files
 .env.local*
 
-# Local project documentation lives in Dropbox via symlink
-project_docs/
-
-project_docs
-
 # Agent files and project docs live in Dropbox, symlinked in per machine
+project_docs
 /AGENTS.md
 /CLAUDE.md
